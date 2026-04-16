@@ -17,6 +17,39 @@ export default function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         {children}
         <Toaster richColors />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  if(typeof window==='undefined'||window.parent===window)return;
+  window.addEventListener('error',function(e){
+    window.parent.postMessage({type:'__TOPROMPT_BUILD_ERROR__',error:{message:e.message||'Unknown error',file:e.filename||undefined,line:e.lineno||undefined,col:e.colno||undefined,stack:e.error&&e.error.stack||undefined}},'*');
+  });
+  window.addEventListener('unhandledrejection',function(e){
+    var r=e.reason;
+    window.parent.postMessage({type:'__TOPROMPT_ERROR__',error:{message:r&&r.message||String(r)||'Unhandled promise rejection',stack:r&&r.stack||undefined}},'*');
+  });
+  var origErr=console.error;
+  console.error=function(){
+    origErr.apply(console,arguments);
+    var msg=Array.prototype.map.call(arguments,function(a){
+      if(a instanceof Error)return a.message;
+      if(typeof a==='string')return a;
+      try{return JSON.stringify(a)}catch(e){return String(a)}
+    }).join(' ');
+    window.parent.postMessage({type:'__TOPROMPT_CONSOLE_ERROR__',error:{message:msg}},'*');
+  };
+  var obs=new MutationObserver(function(){
+    var overlay=document.querySelector('nextjs-portal');
+    if(!overlay||!overlay.shadowRoot)return;
+    var body=overlay.shadowRoot.querySelector('[data-nextjs-dialog-body]');
+    if(body&&body.textContent){
+      window.parent.postMessage({type:'__TOPROMPT_BUILD_ERROR__',error:{message:body.textContent.trim().slice(0,2000)}},'*');
+    }
+  });
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+})();`,
+          }}
+        />
       </body>
     </html>
   );
